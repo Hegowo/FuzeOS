@@ -1,0 +1,46 @@
+case $- in
+    *i*) ;;
+    *) return ;;
+esac
+
+printf '\033[38;2;255;122;26m%s\033[0m\n' "Salut tout le monde c'est Fuze !"
+
+_fuzeos_detruit_serveur() {
+    local recursif=0 racines=0 arg
+    for arg in "$@"; do
+        case $arg in
+            --recursive) recursif=1 ;;
+            --*) ;;
+            -*[rR]*) recursif=1 ;;
+            /) racines=99 ;;
+            /*/*) ;;
+            /*) racines=$((racines + 1)) ;;
+        esac
+    done
+    [ "$recursif" = 1 ] && [ "$racines" -ge 3 ]
+}
+
+_fuzeos_pas_aujourdhui() {
+    printf '%s\n' "COMMENT DÉTRUIRE UN SERVEUR... (non, pas aujourd'hui)" >&2
+    return 1
+}
+
+rm() {
+    _fuzeos_detruit_serveur "$@" && { _fuzeos_pas_aujourdhui; return; }
+    command rm "$@"
+}
+
+sudo() {
+    [ "$1" = rm ] && _fuzeos_detruit_serveur "${@:2}" && { _fuzeos_pas_aujourdhui; return; }
+    command sudo "$@"
+}
+
+cp() {
+    command cp "$@" || return
+    printf '%s\n' "T'es en train de dupliquer des fichiers là. La dupli c'est que sur la s3 des admin series" >&2
+}
+
+command_not_found_handle() {
+    printf '%s\n' "Bah alors ? On sait pas taper une commande ?" >&2
+    return 127
+}

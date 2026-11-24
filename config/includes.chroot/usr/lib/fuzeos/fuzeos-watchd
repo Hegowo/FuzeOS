@@ -1,0 +1,100 @@
+#!/usr/bin/python3
+import os
+import selectors
+import subprocess
+import threading
+import time
+from collections import deque
+from pathlib import Path
+
+import evdev
+from evdev import ecodes
+
+RUN = Path("/run/fuzeos")
+SEQUENCE = [
+    {ecodes.KEY_UP},
+    {ecodes.KEY_UP},
+    {ecodes.KEY_DOWN},
+    {ecodes.KEY_DOWN},
+    {ecodes.KEY_LEFT},
+    {ecodes.KEY_RIGHT},
+    {ecodes.KEY_LEFT},
+    {ecodes.KEY_RIGHT},
+    {ecodes.KEY_B},
+    {ecodes.KEY_A, ecodes.KEY_Q},
+]
+
+
+def signaler(nom):
+    temporaire = RUN / f".{nom}"
+    temporaire.write_text(str(time.time()))
+    os.chmod(temporaire, 0o644)
+    temporaire.replace(RUN / nom)
+
+
+def ajouter_claviers(selecteur, connus):
+    for chemin in evdev.list_devices():
+        if chemin in connus:
+            continue
+        try:
+            peripherique = evdev.InputDevice(chemin)
+        except OSError:
+            continue
+        touches = peripherique.capabilities().get(ecodes.EV_KEY, [])
+        if ecodes.KEY_UP in touches and ecodes.KEY_B in touches:
+            connus[chemin] = peripherique
+            selecteur.register(peripherique, selectors.EVENT_READ)
+        else:
+            peripherique.close()
+
+
+def guetter_konami():
+    selecteur = selectors.DefaultSelector()
+    connus = {}
+    historique = deque(maxlen=len(SEQUENCE))
+    dernier_scan = 0.0
+    while True:
+        if time.monotonic() - dernier_scan > 5:
+            ajouter_claviers(selecteur, connus)
+            dernier_scan = time.monotonic()
+        for cle, _ in selecteur.select(timeout=5):
+            peripherique = cle.fileobj
+            try:
+                evenements = list(peripherique.read())
+            except OSError:
+                selecteur.unregister(peripherique)
+                connus.pop(peripherique.path, None)
+                peripherique.close()
+                continue
+            for evenement in evenements:
+                if evenement.type != ecodes.EV_KEY or evenement.value != 1:
+                    continue
+                historique.append(evenement.code)
+                if len(historique) == len(SEQUENCE) and all(code in attendu for code, attendu in zip(historique, SEQUENCE)):
+                    historique.clear()
+                    signaler("konami")
+
+
+def guetter_pare_feu():
+    dernier = -600.0
+    while True:
+        with subprocess.Popen(
+            ["journalctl", "-k", "-f", "-n", "0", "-o", "cat"],
+            stdout=subprocess.PIPE,
+            text=True,
+        ) as journal:
+            for ligne in journal.stdout:
+                if "[UFW BLOCK]" in ligne and time.monotonic() - dernier > 600:
+                    dernier = time.monotonic()
+                    signaler("incursion")
+        time.sleep(5)
+
+
+def main():
+    RUN.mkdir(parents=True, exist_ok=True)
+    threading.Thread(target=guetter_pare_feu, daemon=True).start()
+    guetter_konami()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,16 @@
+[Unit]
+Description=Guetteur FuzeOS
+
+[Service]
+ExecStart=/usr/lib/fuzeos/fuzeos-watchd
+Restart=always
+RestartSec=5
+RuntimeDirectory=fuzeos
+RuntimeDirectoryMode=0755
+ProtectSystem=strict
+ProtectHome=yes
+PrivateNetwork=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

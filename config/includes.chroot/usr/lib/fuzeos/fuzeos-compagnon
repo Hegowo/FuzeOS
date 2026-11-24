@@ -1,0 +1,113 @@
+#!/usr/bin/python3
+import os
+import re
+import subprocess
+import threading
+import time
+from pathlib import Path
+
+RUN = Path("/run/fuzeos")
+COREDUMPS = Path("/var/lib/systemd/coredump")
+ICONE = "/usr/share/fuzeos/didier-256.png"
+PACMAN = "/usr/games/fuzeos-pacman"
+DOUBLON = re.compile(r"(\((copie|copy|\d+)\)|[ _-](copie|copy))(\.[^.]+)?$", re.IGNORECASE)
+
+MESSAGES = {
+    "incursion": ("Pare-feu Team Baguette", "Incursion repoussée."),
+    "reseau": ("Connexion perdue", "Je crois que Jean-Eude a débranché la fibre de la corp..."),
+    "crash": (
+        "Restructuration",
+        "La Fuze Corp a été absorbée par Scam Industries. Redémarrage depuis zéro avec Framboise et Didier.",
+    ),
+    "dupli": (
+        "Admin Series",
+        "T'es en train de dupliquer des fichiers là. La dupli c'est que sur la s3 des admin series",
+    ),
+}
+
+derniers = {}
+verrou = threading.Lock()
+
+
+def notifier(cle, delai=30):
+    with verrou:
+        maintenant = time.monotonic()
+        if maintenant - derniers.get(cle, -delai) < delai:
+            return
+        derniers[cle] = maintenant
+    titre, texte = MESSAGES[cle]
+    subprocess.run(["notify-send", "-a", "FuzeOS", "-i", ICONE, titre, texte], check=False)
+
+
+def inotify(chemins, evenements, rappel):
+    while True:
+        existants = [str(chemin) for chemin in chemins if chemin.is_dir()]
+        if existants:
+            commande = ["inotifywait", "-m", "-q", "--format", "%w%f", "-e", evenements, *existants]
+            with subprocess.Popen(commande, stdout=subprocess.PIPE, text=True) as processus:
+                for ligne in processus.stdout:
+                    rappel(Path(ligne.rstrip("\n")))
+        time.sleep(5)
+
+
+def sur_signal(chemin):
+    if chemin.name == "konami":
+        subprocess.Popen([PACMAN], start_new_session=True)
+    elif chemin.name == "incursion":
+        notifier("incursion")
+
+
+def sur_fichier(chemin):
+    if DOUBLON.search(chemin.name):
+        notifier("dupli")
+
+
+def dossiers_utilisateur():
+    dossiers = []
+    for nom in ("DESKTOP", "DOCUMENTS", "DOWNLOAD", "PICTURES", "MUSIC", "VIDEOS"):
+        try:
+            resultat = subprocess.run(["xdg-user-dir", nom], capture_output=True, text=True, check=False)
+        except FileNotFoundError:
+            break
+        chemin = resultat.stdout.strip()
+        if chemin and chemin != str(Path.home()):
+            dossiers.append(Path(chemin))
+    return dossiers or [Path.home()]
+
+
+def guetter_reseau():
+    precedent = None
+    environnement = dict(os.environ, LC_ALL="C")
+    while True:
+        try:
+            etat = subprocess.run(
+                ["nmcli", "-t", "-f", "STATE", "general"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                env=environnement,
+            ).stdout.strip()
+        except (OSError, subprocess.TimeoutExpired):
+            etat = ""
+        if precedent and precedent.startswith("connected") and etat.startswith("disconnected"):
+            notifier("reseau")
+        if etat:
+            precedent = etat
+        time.sleep(5)
+
+
+def main():
+    taches = [
+        (inotify, ([RUN], "moved_to,close_write", sur_signal)),
+        (inotify, ([COREDUMPS], "create,moved_to", lambda _: notifier("crash"))),
+        (inotify, (dossiers_utilisateur(), "create,moved_to", sur_fichier)),
+        (guetter_reseau, ()),
+    ]
+    for cible, arguments in taches:
+        threading.Thread(target=cible, args=arguments, daemon=True).start()
+    while True:
+        time.sleep(3600)
+
+
+if __name__ == "__main__":
+    main()

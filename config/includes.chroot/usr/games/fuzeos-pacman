@@ -1,0 +1,4 @@
+#!/bin/sh
+profil=$(mktemp -d)
+trap 'rm -rf "$profil"' EXIT
+firefox-esr --no-remote --profile "$profil" --kiosk "file:///usr/share/fuzeos/games/pacman/index.html"

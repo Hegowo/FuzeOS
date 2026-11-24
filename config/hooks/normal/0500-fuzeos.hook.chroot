@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+dpkg-divert --local --rename --divert /usr/lib/os-release.debian --add /usr/lib/os-release
+cp /usr/share/fuzeos/os-release /usr/lib/os-release
+
+chmod 0440 /etc/sudoers.d/fuzeos
+
+plymouth-set-default-theme fuzeos
+
+sed -i 's/^ENABLED=.*/ENABLED=yes/' /etc/ufw/ufw.conf
+sed -i 's/^LOGLEVEL=.*/LOGLEVEL=low/' /etc/ufw/ufw.conf
+systemctl enable ufw.service fuzeos-watchd.service
+
+if [ -f /etc/calamares/settings.conf ]; then
+    sed -i 's/^branding:.*/branding: fuzeos/' /etc/calamares/settings.conf
+fi
+
+gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true

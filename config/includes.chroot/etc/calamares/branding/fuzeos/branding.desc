@@ -1,0 +1,32 @@
+---
+componentName: fuzeos
+welcomeStyleCalamares: false
+windowExpanding: normal
+windowSize: 1000px,640px
+
+strings:
+    productName: FuzeOS
+    shortProductName: FuzeOS
+    version: 1.0 Améthyste
+    shortVersion: "1.0"
+    versionedName: FuzeOS 1.0 Améthyste
+    shortVersionedName: FuzeOS 1.0
+    bootloaderEntryName: FuzeOS
+    productUrl: ""
+    supportUrl: ""
+    knownIssuesUrl: ""
+    releaseNotesUrl: ""
+
+images:
+    productLogo: "didier.png"
+    productIcon: "didier.png"
+    productWelcome: "didier.png"
+
+slideshow: "show.qml"
+slideshowAPI: 2
+
+style:
+    SidebarBackground: "#140b1d"
+    SidebarText: "#ffffff"
+    SidebarTextCurrent: "#ff7a1a"
+    SidebarBackgroundCurrent: "#2b1d3a"

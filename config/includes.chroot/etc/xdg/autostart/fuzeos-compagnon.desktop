@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Compagnon FuzeOS
+Exec=/usr/lib/fuzeos/fuzeos-compagnon
+NoDisplay=true
+X-KDE-autostart-phase=2

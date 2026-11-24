@@ -1,0 +1,44 @@
+Window.SetBackgroundTopColor(0.06, 0.04, 0.08);
+Window.SetBackgroundBottomColor(0.06, 0.04, 0.08);
+
+global.ouvert = Image("didier.png");
+global.ferme = Image("didier-blink.png");
+global.didier = Sprite(global.ouvert);
+global.didier.SetX(Window.GetX() + Window.GetWidth() / 2 - global.ouvert.GetWidth() / 2);
+global.didier.SetY(Window.GetY() + Window.GetHeight() / 2 - global.ouvert.GetHeight() / 2);
+global.ticks = 0;
+
+fun rafraichir() {
+    global.ticks = global.ticks + 1;
+    if (global.ticks >= 150)
+        global.ticks = 0;
+    if (global.ticks < 7)
+        global.didier.SetImage(global.ferme);
+    else
+        global.didier.SetImage(global.ouvert);
+}
+Plymouth.SetRefreshFunction(rafraichir);
+
+fun afficher_mot_de_passe(invite, puces) {
+    global.invite = Sprite(Image.Text(invite, 1, 0.48, 0.1));
+    global.invite.SetX(Window.GetX() + Window.GetWidth() / 2 - global.invite.GetImage().GetWidth() / 2);
+    global.invite.SetY(Window.GetY() + Window.GetHeight() * 0.72);
+    texte = "";
+    i = 0;
+    while (i < puces) {
+        texte = texte + "*";
+        i = i + 1;
+    }
+    global.puces = Sprite(Image.Text(texte + " ", 1, 1, 1));
+    global.puces.SetX(Window.GetX() + Window.GetWidth() / 2 - global.puces.GetImage().GetWidth() / 2);
+    global.puces.SetY(Window.GetY() + Window.GetHeight() * 0.72 + 30);
+}
+Plymouth.SetDisplayPasswordFunction(afficher_mot_de_passe);
+
+fun affichage_normal() {
+    if (global.invite)
+        global.invite.SetOpacity(0);
+    if (global.puces)
+        global.puces.SetOpacity(0);
+}
+Plymouth.SetDisplayNormalFunction(affichage_normal);

@@ -1,0 +1,9 @@
+sudo
+cowsay
+fastfetch
+python3
+python3-evdev
+inotify-tools
+libnotify-bin
+ufw
+systemd-coredump
