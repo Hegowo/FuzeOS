@@ -1,0 +1,18 @@
+[General]
+count=1
+rules=fuzeos-parcours
+
+[fuzeos-parcours]
+Description=FuzeOS parcours
+wmclass=fuzeos-parcours
+wmclassmatch=1
+above=true
+aboverule=2
+skiptaskbar=true
+skiptaskbarrule=2
+skippager=true
+skippagerrule=2
+skipswitcher=true
+skipswitcherrule=2
+acceptfocus=false
+acceptfocusrule=2

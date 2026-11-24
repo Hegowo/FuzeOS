@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+import random
 import re
 import subprocess
 import threading
@@ -10,6 +11,8 @@ RUN = Path("/run/fuzeos")
 COREDUMPS = Path("/var/lib/systemd/coredump")
 ICONE = "/usr/share/fuzeos/didier-256.png"
 PACMAN = "/usr/games/fuzeos-pacman"
+PARCOURS = "/usr/lib/fuzeos/fuzeos-parcours"
+CORBEILLE = Path.home() / ".local/share/Trash/files"
 DOUBLON = re.compile(r"(\((copie|copy|\d+)\)|[ _-](copie|copy))(\.[^.]+)?$", re.IGNORECASE)
 
 MESSAGES = {
@@ -62,6 +65,27 @@ def sur_fichier(chemin):
         notifier("dupli")
 
 
+def parcours(mode):
+    subprocess.Popen([PARCOURS, mode], start_new_session=True)
+
+
+def guetter_traversees():
+    while True:
+        time.sleep(random.uniform(45 * 60, 4 * 3600))
+        parcours("traversee")
+
+
+def sur_corbeille(_):
+    with verrou:
+        maintenant = time.monotonic()
+        if maintenant - derniers.get("corbeille", -10) < 10:
+            return
+        derniers["corbeille"] = maintenant
+    time.sleep(1.5)
+    if CORBEILLE.is_dir() and not any(CORBEILLE.iterdir()):
+        parcours("coin")
+
+
 def dossiers_utilisateur():
     dossiers = []
     for nom in ("DESKTOP", "DOCUMENTS", "DOWNLOAD", "PICTURES", "MUSIC", "VIDEOS"):
@@ -101,7 +125,9 @@ def main():
         (inotify, ([RUN], "moved_to,close_write", sur_signal)),
         (inotify, ([COREDUMPS], "create,moved_to", lambda _: notifier("crash"))),
         (inotify, (dossiers_utilisateur(), "create,moved_to", sur_fichier)),
+        (inotify, ([CORBEILLE], "delete,moved_from", sur_corbeille)),
         (guetter_reseau, ()),
+        (guetter_traversees, ()),
     ]
     for cible, arguments in taches:
         threading.Thread(target=cible, args=arguments, daemon=True).start()

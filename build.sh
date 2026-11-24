@@ -12,6 +12,8 @@ install -d "$root/usr/share/fuzeos/games" "$root/usr/share/wallpapers" \
     "$root/usr/share/icons/hicolor/256x256/apps" "$root/usr/share/pixmaps"
 
 cp -a games/pacman "$root/usr/share/fuzeos/games/pacman"
+rm -rf "$root/usr/share/fuzeos/parcours"
+cp -a branding/parcours "$root/usr/share/fuzeos/parcours"
 cp branding/didier/*.png "$root/usr/share/fuzeos/"
 cp branding/didier/didier.png branding/didier/didier-blink.png "$root/usr/share/plymouth/themes/fuzeos/"
 cp branding/didier/didier-256.png "$root/usr/share/icons/hicolor/256x256/apps/fuzeos.png"

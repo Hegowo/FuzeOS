@@ -1,0 +1,93 @@
+#!/usr/bin/python3
+import random
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+from PyQt6.QtCore import QRectF, Qt, QTimer
+from PyQt6.QtGui import QGuiApplication, QPainter, QPainterPath, QPixmap
+from PyQt6.QtWidgets import QApplication, QWidget
+
+RACINE = Path("/usr/share/fuzeos/parcours")
+FPS = 30
+MARGE_BAS = 70
+
+
+class Scene(QWidget):
+    def __init__(self, mode, clip):
+        super().__init__(
+            None,
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.WindowTransparentForInput
+            | Qt.WindowType.WindowDoesNotAcceptFocus
+            | Qt.WindowType.Tool,
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
+        self.mode = mode
+        sous_dossier = "detoure" if mode == "traversee" else "complet"
+        self.images = [QPixmap(str(f)) for f in sorted((RACINE / clip / sous_dossier).iterdir())]
+        self.son = RACINE / clip / "son.ogg"
+        self.indice = 0
+        self.setGeometry(QGuiApplication.primaryScreen().geometry())
+        self.minuteur = QTimer(self)
+        self.minuteur.timeout.connect(self.avancer)
+
+    def demarrer(self):
+        if self.mode == "coin" and self.son.exists() and shutil.which("pw-play"):
+            subprocess.Popen(["pw-play", str(self.son)], start_new_session=True)
+        self.showFullScreen()
+        self.minuteur.start(1000 // FPS)
+
+    def avancer(self):
+        self.indice += 1
+        if self.indice >= len(self.images):
+            self.minuteur.stop()
+            QApplication.quit()
+            return
+        self.update()
+
+    def opacite(self):
+        bord = 5
+        return min(1.0, (self.indice + 1) / bord, (len(self.images) - self.indice) / bord)
+
+    def paintEvent(self, evenement):
+        image = self.images[self.indice]
+        peintre = QPainter(self)
+        peintre.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        peintre.setOpacity(self.opacite())
+        largeur, hauteur = self.width(), self.height()
+        if self.mode == "traversee":
+            echelle = min(1.0, hauteur * 0.45 / image.height())
+            l, h = image.width() * echelle, image.height() * echelle
+            progression = self.indice / max(1, len(self.images) - 1)
+            x = largeur * (0.1 + 0.8 * progression) - l / 2
+            y = hauteur - MARGE_BAS - h
+            peintre.drawPixmap(QRectF(x, y, l, h), image, QRectF(image.rect()))
+        else:
+            l, h = image.width(), image.height()
+            cadre = QRectF(largeur - l - 24, hauteur - MARGE_BAS - h, l, h)
+            chemin = QPainterPath()
+            chemin.addRoundedRect(cadre, 14, 14)
+            peintre.setClipPath(chemin)
+            peintre.drawPixmap(cadre, image, QRectF(image.rect()))
+        peintre.end()
+
+
+def main():
+    mode = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] in ("traversee", "coin") else "traversee"
+    clips = sorted(p.name for p in RACINE.iterdir() if p.is_dir())
+    if not clips:
+        return
+    clip = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] in clips else random.choice(clips)
+    application = QApplication(sys.argv)
+    application.setDesktopFileName("fuzeos-parcours")
+    scene = Scene(mode, clip)
+    scene.demarrer()
+    application.exec()
+
+
+if __name__ == "__main__":
+    main()

@@ -7,3 +7,4 @@ inotify-tools
 libnotify-bin
 ufw
 systemd-coredump
+python3-pyqt6
