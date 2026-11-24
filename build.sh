@@ -44,6 +44,15 @@ fi
 python3 tools/splash.py "$grub/splash.png" 800 600
 sed -i 's/^title-text:.*/title-text: ""/' "$grub/live-theme/theme.txt"
 
+theme="$root/usr/share/grub/themes/fuzeos"
+install -d "$theme"
+cp "$grub/splash.png" "$theme/splash.png"
+sed -e 's#"../splash.png"#"splash.png"#' \
+    -e 's/@KEYMAP_SHORT@/Entrée : démarrer, e : modifier, c : console/' \
+    -e 's/@TIMEOUT_NOTIFICATION_LONG@/Démarrage dans %d s/' \
+    "$grub/live-theme/theme.txt" > "$theme/theme.txt"
+chmod -R u+rwX,go+rX "$theme"
+
 lb clean
 lb config
 lb build

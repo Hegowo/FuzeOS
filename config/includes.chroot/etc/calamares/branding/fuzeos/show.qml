@@ -4,13 +4,11 @@ import calamares.slideshow 1.0
 Presentation {
     id: presentation
 
-    function onActivate() { minuteur.running = true }
-    function onLeave() { minuteur.running = false }
-
     Timer {
         id: minuteur
         interval: 12000
         repeat: true
+        running: true
         onTriggered: presentation.goToNextSlide()
     }
 
