@@ -32,6 +32,16 @@ while IFS=$'\t' read -r fichier id nom; do
     fi
 done < wallpaper/wallpapers.tsv
 
+chmod -R u+rwX,go+rX "$root"
+
+grub=config/bootloaders/grub-pc
+if [ ! -d "$grub" ]; then
+    install -d config/bootloaders
+    cp -a /usr/share/live/build/bootloaders/grub-pc "$grub"
+fi
+python3 tools/splash.py "$grub/splash.png" 800 600
+sed -i 's/^title-text:.*/title-text: ""/' "$grub/live-theme/theme.txt"
+
 lb clean
 lb config
 lb build

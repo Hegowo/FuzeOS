@@ -6,5 +6,5 @@ RUN apt-get update \
        esac \
     && apt-get install -y --no-install-recommends \
        live-build debootstrap xorriso squashfs-tools mtools dosfstools $boot \
-       ca-certificates rsync python3 python3-pil \
+       ca-certificates rsync python3 python3-pil fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*

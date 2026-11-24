@@ -3,6 +3,7 @@ set -e
 
 dpkg-divert --local --rename --divert /usr/lib/os-release.debian --add /usr/lib/os-release
 cp /usr/share/fuzeos/os-release /usr/lib/os-release
+cp /usr/share/fuzeos/os-release /etc/os-release
 
 chmod 0440 /etc/sudoers.d/fuzeos
 
@@ -14,6 +15,16 @@ systemctl enable ufw.service fuzeos-watchd.service
 
 if [ -f /etc/calamares/settings.conf ]; then
     sed -i 's/^branding:.*/branding: fuzeos/' /etc/calamares/settings.conf
+fi
+
+lanceur=/usr/share/applications/calamares-install-debian.desktop
+if [ -f "$lanceur" ]; then
+    sed -i -E \
+        -e 's/^Name(\[[^]]*\])?=.*/Name\1=Installer FuzeOS/' \
+        -e 's/^GenericName(\[[^]]*\])?=.*/GenericName\1=Installeur FuzeOS/' \
+        -e 's/^Comment(\[[^]]*\])?=.*/Comment\1=Installer FuzeOS sur cet ordinateur/' \
+        -e 's/^Icon=.*/Icon=fuzeos/' \
+        "$lanceur"
 fi
 
 gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true
