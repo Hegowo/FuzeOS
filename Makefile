@@ -6,7 +6,7 @@ IMAGE = fuzeos-builder:$(ARCH)
 iso:
 	docker build --platform linux/$(ARCH) -t $(IMAGE) .
 	mkdir -p out
-	docker run --rm --privileged --platform linux/$(ARCH) \
+	docker run --rm --name fuzeos-build-$(ARCH) --privileged --platform linux/$(ARCH) \
 		-e ARCH=$(ARCH) \
 		-v "$(CURDIR)":/src:ro \
 		-v fuzeos-work-$(ARCH):/work \
