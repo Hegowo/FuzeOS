@@ -1,47 +1,60 @@
-import random
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
-OBSIDIENNE = [(15, 10, 21), (28, 20, 38), (43, 29, 58), (61, 42, 82)]
-BORD = (8, 5, 12)
-OEIL = (255, 122, 26)
-REFLET = (255, 192, 97)
-PAUPIERE = (150, 62, 14)
+SOURCE = Path("branding/didier/peluche.png")
+MARGE = 0.06
 
 
-def pixels(cligne):
-    rng = random.Random(83)
-    grille = [[rng.choices(OBSIDIENNE, weights=[5, 4, 2, 1])[0] for _ in range(16)] for _ in range(16)]
-    for i in range(16):
-        grille[0][i] = grille[15][i] = grille[i][0] = grille[i][15] = BORD
-    for x0 in (3, 10):
-        if cligne:
-            for x in range(x0, x0 + 3):
-                grille[8][x] = PAUPIERE
-        else:
-            for y in range(6, 9):
-                for x in range(x0, x0 + 3):
-                    grille[y][x] = OEIL
-            grille[6][x0] = REFLET
-    return grille
+def est_oeil(r, g, b, a):
+    return a > 200 and r > 150 and r > g + 60 and g > b
 
 
-def rendu(cligne, taille):
-    image = Image.new("RGBA", (16, 16))
-    for y, ligne in enumerate(pixels(cligne)):
-        for x, couleur in enumerate(ligne):
-            image.putpixel((x, y), couleur + (255,))
-    return image.resize((taille, taille), Image.NEAREST)
+def charger():
+    image = Image.open(SOURCE).convert("RGBA")
+    boite = image.getbbox()
+    image = image.crop(boite)
+    cote = round(max(image.size) * (1 + 2 * MARGE))
+    carre = Image.new("RGBA", (cote, cote))
+    carre.paste(image, ((cote - image.width) // 2, (cote - image.height) // 2))
+    return carre
+
+
+def cligner(image):
+    resultat = image.copy()
+    pixels = resultat.load()
+    masque = Image.new("L", image.size)
+    trace = masque.load()
+    for y in range(image.height):
+        for x in range(image.width):
+            if est_oeil(*pixels[x, y]):
+                trace[x, y] = 255
+    masque = masque.filter(ImageFilter.MaxFilter(15))
+    boite = masque.getbbox()
+    if not boite:
+        return resultat
+    gauche, haut, droite, bas = boite
+    trait = bas - (bas - haut) // 5
+    hauteur = trait - haut
+    tissu = image.crop((gauche, haut - hauteur - 10, droite, haut - 10))
+    paupiere = Image.new("RGBA", image.size)
+    paupiere.paste(tissu, (gauche, haut))
+    zone = masque.point(lambda v: 255 if v else 0)
+    zone.paste(0, (0, trait, image.width, image.height))
+    resultat.paste(paupiere, (0, 0), zone.filter(ImageFilter.GaussianBlur(3)))
+    return resultat
 
 
 def main():
     sortie = Path(sys.argv[1] if len(sys.argv) > 1 else "branding/didier")
     sortie.mkdir(parents=True, exist_ok=True)
-    rendu(False, 192).save(sortie / "didier.png")
-    rendu(True, 192).save(sortie / "didier-blink.png")
-    rendu(False, 256).save(sortie / "didier-256.png")
+    ouvert = charger()
+    ferme = cligner(ouvert)
+    ouvert.resize((192, 192), Image.LANCZOS).save(sortie / "didier.png")
+    ferme.resize((192, 192), Image.LANCZOS).save(sortie / "didier-blink.png")
+    ouvert.resize((256, 256), Image.LANCZOS).save(sortie / "didier-256.png")
+    ouvert.resize((512, 512), Image.LANCZOS).save(sortie / "didier-512.png")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,6 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-from didier import rendu
 
 POLICE = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FOND = (15, 10, 21)
@@ -15,7 +14,7 @@ def main():
     largeur, hauteur = int(sys.argv[2]), int(sys.argv[3])
     image = Image.new("RGB", (largeur, hauteur), FOND)
     taille = hauteur // 4
-    didier = rendu(False, taille)
+    didier = Image.open("branding/didier/didier-512.png").convert("RGBA").resize((taille, taille), Image.LANCZOS)
     x = largeur // 2 - taille // 2
     image.paste(didier, (x, hauteur // 16), didier)
     dessin = ImageDraw.Draw(image)

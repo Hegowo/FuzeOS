@@ -27,4 +27,9 @@ if [ -f "$lanceur" ]; then
         "$lanceur"
 fi
 
+for module in /usr/lib/*/qt6/plugins/kf6/kded/kded_plasma-welcome.so; do
+    [ -e "$module" ] || continue
+    dpkg-divert --local --rename --divert "$module.fuzeos-desactive" --add "$module"
+done
+
 gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true

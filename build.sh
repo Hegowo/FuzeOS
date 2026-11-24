@@ -14,11 +14,13 @@ install -d "$root/usr/share/fuzeos/games" "$root/usr/share/wallpapers" \
 cp -a games/pacman "$root/usr/share/fuzeos/games/pacman"
 rm -rf "$root/usr/share/fuzeos/parcours"
 cp -a branding/parcours "$root/usr/share/fuzeos/parcours"
-cp branding/didier/*.png "$root/usr/share/fuzeos/"
+cp branding/didier/didier.png branding/didier/didier-blink.png branding/didier/didier-256.png "$root/usr/share/fuzeos/"
 cp branding/didier/didier.png branding/didier/didier-blink.png "$root/usr/share/plymouth/themes/fuzeos/"
 cp branding/didier/didier-256.png "$root/usr/share/icons/hicolor/256x256/apps/fuzeos.png"
 cp branding/didier/didier-256.png "$root/usr/share/pixmaps/fuzeos.png"
 cp branding/didier/didier-256.png "$root/etc/calamares/branding/fuzeos/didier.png"
+rm -rf "$root/etc/calamares/branding/fuzeos/photos"
+cp -a branding/photos "$root/etc/calamares/branding/fuzeos/photos"
 
 defaut=1
 while IFS=$'\t' read -r fichier id nom; do

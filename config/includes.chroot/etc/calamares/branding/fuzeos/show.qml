@@ -4,29 +4,29 @@ import calamares.slideshow 1.0
 Presentation {
     id: presentation
 
+    property var photos: ["photos/01.jpg", "photos/02.jpg", "photos/03.jpg", "photos/04.jpg", "photos/05.jpg"]
+    property int indice: 0
+
     Timer {
-        id: minuteur
-        interval: 12000
+        interval: 5000
         repeat: true
         running: true
-        onTriggered: presentation.goToNextSlide()
+        onTriggered: presentation.indice = (presentation.indice + 1) % presentation.photos.length
     }
 
     Slide {
-        Column {
-            anchors.centerIn: parent
-            spacing: 24
-            Image { source: "didier.png"; width: 160; height: 160; anchors.horizontalCenter: parent.horizontalCenter }
-            Text { text: "Salut tout le monde c'est Fuze !"; font.pixelSize: 26; color: "#ff7a1a"; anchors.horizontalCenter: parent.horizontalCenter }
-            Text { text: "FuzeOS s'installe, va te chercher un truc à boire."; font.pixelSize: 16; anchors.horizontalCenter: parent.horizontalCenter }
+        Rectangle {
+            anchors.fill: parent
+            color: "#140b1d"
+
+            Image {
+                anchors.fill: parent
+                anchors.margins: 16
+                source: presentation.photos[presentation.indice]
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                asynchronous: false
+            }
         }
-    }
-
-    Slide {
-        Text { anchors.centerIn: parent; font.pixelSize: 20; text: "Didier veille sur tes fichiers.\nPas de dupli, pas de X-ray." ; horizontalAlignment: Text.AlignHCenter }
-    }
-
-    Slide {
-        Text { anchors.centerIn: parent; font.pixelSize: 16; text: "FuzeOS est un projet de fan non officiel, basé sur Debian."; horizontalAlignment: Text.AlignHCenter }
     }
 }
