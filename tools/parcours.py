@@ -71,13 +71,6 @@ def exporter_complet(images, sortie):
         trame.resize((LARGEUR_COIN, hauteur), Image.LANCZOS).save(sortie / f"{i:03d}.jpg", quality=82)
 
 
-def exporter_son(clip, sortie):
-    subprocess.run(
-        ["ffmpeg", "-v", "error", "-y", "-i", str(clip), "-vn", "-c:a", "libopus", "-b:a", "96k", str(sortie / "son.ogg")],
-        check=True,
-    )
-
-
 def main():
     racine = Path(sys.argv[1] if len(sys.argv) > 1 else ".")
     sources = racine / "parcours"
@@ -92,7 +85,6 @@ def main():
             shutil.rmtree(cible, ignore_errors=True)
             exporter_detoure(detourees, cible / "detoure")
             exporter_complet(images, cible / "complet")
-            exporter_son(clip, cible)
         print(f"{clip.stem} : {len(images)} images")
 
 

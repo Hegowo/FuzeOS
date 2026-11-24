@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 import random
-import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -29,15 +27,12 @@ class Scene(QWidget):
         self.mode = mode
         sous_dossier = "detoure" if mode == "traversee" else "complet"
         self.images = [QPixmap(str(f)) for f in sorted((RACINE / clip / sous_dossier).iterdir())]
-        self.son = RACINE / clip / "son.ogg"
         self.indice = 0
         self.setGeometry(QGuiApplication.primaryScreen().geometry())
         self.minuteur = QTimer(self)
         self.minuteur.timeout.connect(self.avancer)
 
     def demarrer(self):
-        if self.mode == "coin" and self.son.exists() and shutil.which("pw-play"):
-            subprocess.Popen(["pw-play", str(self.son)], start_new_session=True)
         self.showFullScreen()
         self.minuteur.start(1000 // FPS)
 
