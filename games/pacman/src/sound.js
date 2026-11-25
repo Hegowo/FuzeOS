@@ -77,7 +77,7 @@ function audioTrack(url, volume) {
     gain.gain.value = volume || 1;
     gain.connect(contexteAudio.destination);
 
-    fetch(url)
+    fetch((window.sonsIntegres && sonsIntegres[url]) || url)
         .then(function(reponse) { return reponse.arrayBuffer(); })
         .then(function(donnees) { return contexteAudio.decodeAudioData(donnees); })
         .then(function(decode) {

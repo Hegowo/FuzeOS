@@ -9,7 +9,6 @@ cat > "$profil/user.js" <<'PREFS'
 user_pref("media.autoplay.default", 0);
 user_pref("media.autoplay.blocking_policy", 0);
 user_pref("media.cubeb_latency_playback_ms", 30);
-user_pref("security.fileuri.strict_origin_policy", false);
 user_pref("dom.allow_scripts_to_close_windows", true);
 user_pref("browser.sessionstore.resume_from_crash", false);
 user_pref("browser.shell.checkDefaultBrowser", false);

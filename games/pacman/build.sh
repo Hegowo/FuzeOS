@@ -2,6 +2,13 @@
 set -e
 cd "$(dirname "$0")"
 OUTPUT="pacman.js"
+{
+    printf 'var sonsIntegres = {\n'
+    for son in sounds/*.mp3; do
+        printf '    "%s": "data:audio/mpeg;base64,%s",\n' "$son" "$(base64 < "$son" | tr -d '\n')"
+    done
+    printf '};\n'
+} > sons.js
 cat > "$OUTPUT" <<'HEADER'
 
 // Copyright 2012 Shaun Williams
