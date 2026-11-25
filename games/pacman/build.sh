@@ -5,6 +5,9 @@ OUTPUT="pacman.js"
 {
     printf 'var sonsIntegres = {\n'
     for son in sounds/*.mp3; do
+        case "$son" in
+            *[!A-Za-z0-9._/-]*) echo "nom de son invalide : $son" >&2; exit 1 ;;
+        esac
         printf '    "%s": "data:audio/mpeg;base64,%s",\n' "$son" "$(base64 < "$son" | tr -d '\n')"
     done
     printf '};\n'
