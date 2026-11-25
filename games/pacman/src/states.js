@@ -161,6 +161,7 @@ var homeState = (function(){
         ctx.textAlign = "center";
         ctx.fillStyle = "#888";
         ctx.fillText("ARROWS / ZQSD", mapWidth/2, 31*tileSize);
+        ctx.fillText("ESC TO QUIT", mapWidth/2, 33*tileSize);
     };
 
     return {

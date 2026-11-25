@@ -1,4 +1,22 @@
 #!/bin/sh
-profil=$(mktemp -d)
-trap 'rm -rf "$profil"' EXIT
+dossier="${XDG_CACHE_HOME:-$HOME/.cache}/fuzeos"
+profil="$dossier/pacman"
+mkdir -p "$profil"
+exec 9>"$dossier/pacman.lock"
+flock -n 9 || exit 0
+rm -rf "$profil"/sessionstore.jsonlz4 "$profil"/sessionstore-backups
+cat > "$profil/user.js" <<'PREFS'
+user_pref("media.autoplay.default", 0);
+user_pref("media.autoplay.blocking_policy", 0);
+user_pref("media.cubeb_latency_playback_ms", 30);
+user_pref("security.fileuri.strict_origin_policy", false);
+user_pref("dom.allow_scripts_to_close_windows", true);
+user_pref("browser.sessionstore.resume_from_crash", false);
+user_pref("browser.shell.checkDefaultBrowser", false);
+user_pref("browser.startup.homepage_override.mstone", "ignore");
+user_pref("browser.aboutwelcome.enabled", false);
+user_pref("datareporting.policy.dataSubmissionEnabled", false);
+user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);
+user_pref("app.update.auto", false);
+PREFS
 firefox-esr --no-remote --profile "$profil" --kiosk "file:///usr/share/fuzeos/games/pacman/index.html"

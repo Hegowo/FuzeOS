@@ -2,7 +2,7 @@
 
 var audio = new preloadAudio();
 
-function audioTrack(url, volume) {
+function elementTrack(url, volume) {
     var audio = new Audio(url);
     if (volume) audio.volume = volume;
     audio.load();
@@ -47,6 +47,102 @@ function audioTrack(url, volume) {
         } 
         catch(err){ console.error(err) }
     }
+}
+
+
+var contexteAudio = window.AudioContext ? new AudioContext({ latencyHint: 'interactive' }) : null;
+
+if (contexteAudio) {
+    var reveillerAudio = function() {
+        if (contexteAudio.state == 'suspended') contexteAudio.resume();
+    };
+    window.addEventListener('keydown', reveillerAudio);
+    window.addEventListener('mousedown', reveillerAudio);
+    window.addEventListener('touchstart', reveillerAudio);
+}
+
+function audioTrack(url, volume) {
+    if (!contexteAudio) {
+        elementTrack.call(this, url, volume);
+        return;
+    }
+    var tampon = null;
+    var secours = null;
+    var source = null;
+    var debut = 0;
+    var decalage = 0;
+    var looping = false;
+    var attente = null;
+    var gain = contexteAudio.createGain();
+    gain.gain.value = volume || 1;
+    gain.connect(contexteAudio.destination);
+
+    fetch(url)
+        .then(function(reponse) { return reponse.arrayBuffer(); })
+        .then(function(donnees) { return contexteAudio.decodeAudioData(donnees); })
+        .then(function(decode) {
+            tampon = decode;
+            if (attente) lancer(attente.boucle, attente.noResetTime);
+            attente = null;
+        })
+        .catch(function() {
+            secours = new elementTrack(url, volume);
+            if (attente) attente.boucle ? secours.startLoop(attente.noResetTime) : secours.play(attente.noResetTime);
+            attente = null;
+        });
+
+    function arreter(noResetTime) {
+        if (source) {
+            if (noResetTime) decalage = (contexteAudio.currentTime - debut) % tampon.duration;
+            source.onended = null;
+            try { source.stop(); } catch (e) {}
+            source = null;
+        }
+        if (!noResetTime) decalage = 0;
+    }
+
+    function lancer(boucle, noResetTime) {
+        if (!tampon) {
+            attente = { boucle: boucle, noResetTime: noResetTime };
+            return;
+        }
+        if (source && noResetTime && !boucle) return;
+        arreter(noResetTime);
+        var depart = noResetTime ? decalage : 0;
+        source = contexteAudio.createBufferSource();
+        source.buffer = tampon;
+        source.loop = boucle;
+        source.connect(gain);
+        source.onended = function() { source = null; };
+        debut = contexteAudio.currentTime - depart;
+        source.start(0, depart);
+    }
+
+    this.play = function(noResetTime) {
+        if (secours) return secours.play(noResetTime);
+        lancer(false, noResetTime);
+    };
+    this.startLoop = function(noResetTime) {
+        if (secours) return secours.startLoop(noResetTime);
+        if (looping) return;
+        looping = true;
+        lancer(true, noResetTime);
+    };
+    this.stopLoop = function(noResetTime) {
+        if (secours) return secours.stopLoop(noResetTime);
+        attente = null;
+        looping = false;
+        if (tampon) arreter(noResetTime);
+    };
+    this.isPlaying = function() {
+        if (secours) return secours.isPlaying();
+        return !!source;
+    };
+    this.isPaused = function() {
+        if (secours) return secours.isPaused();
+        return !source;
+    };
+    this.stop = this.stopLoop;
 }
 
 

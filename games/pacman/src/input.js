@@ -115,7 +115,7 @@
         }
         return menu;
     };
-    addKeyDown(KEY_ESC,   function(){ menu.backButton ? menu.backButton.onclick():0; return true; }, isInMenu);
+    addKeyDown(KEY_ESC,   function(){ if (menu.backButton) menu.backButton.onclick(); else if (state == homeState) window.close(); return true; }, isInMenu);
     addKeyDown(KEY_ENTER, function(){ menu.clickCurrentOption(); }, isInMenu);
     var isMenuKeysAllowed = function() {
         var menu = isInMenu();
